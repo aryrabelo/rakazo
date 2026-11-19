@@ -1,0 +1,57 @@
+# Copyright (c) 2026 Ary Rabelo. All rights reserved. See agentic/LICENSE.
+#
+# Builds the server image (api, worker, web and supervisor) with the agentic overlay applied and
+# publishes it as ghcr.io/<owner>/<repo>/app:sha-<commit>. The overlay is applied in the build
+# tree only (agentic/README.md); nothing is committed back.
+name: agentic-app-image
+
+on:
+  push:
+    branches: ["agentic/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: agentic-app-image-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  app:
+    name: Build and publish the app image
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24
+      - name: Apply the agentic overlay
+        run: node agentic/apply.mjs
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: image
+        name: Image name
+        # GHCR names must be lowercase.
+        run: echo "name=ghcr.io/${GITHUB_REPOSITORY,,}/app" >> "$GITHUB_OUTPUT"
+      - uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
+        with:
+          context: .
+          file: infra/compose/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.image.outputs.name }}:sha-${{ github.sha }}
+          build-args: GIT_SHA=${{ github.sha }}
+          cache-from: type=gha,scope=agentic-app
+          cache-to: type=gha,mode=max,scope=agentic-app
+          provenance: false
