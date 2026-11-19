@@ -1,0 +1,49 @@
+# Copyright (c) 2026 Ary Rabelo. All rights reserved. See agentic/LICENSE.
+# Unsigned macOS desktop app with the agentic overlay applied. No signing or notarization secrets.
+name: agentic-desktop
+on:
+  push:
+    branches: ["agentic/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: agentic-desktop-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: macOS app (unsigned)
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install
+        run: npx -y pnpm@12.18.0 install --frozen-lockfile
+      - name: Apply overlay
+        run: node agentic/apply.mjs
+      - name: Build
+        run: |
+          npx -y pnpm@12.18.0 --filter @rakazo/web build
+          npx -y pnpm@12.18.0 --filter @rakazo/desktop build
+          test -f apps/desktop/dist/egress-proxy.cjs
+      - name: Package (unsigned)
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+        run: >-
+          npx -y pnpm@12.18.0 --filter @rakazo/desktop exec electron-builder --mac --dir --publish never
+          -c.mac.identity=null -c.mac.notarize=false
+      - name: Zip app
+        run: ditto -c -k --keepParent apps/desktop/out/mac-*/Rakazo.app "$RUNNER_TEMP/Rakazo-mac-unsigned.zip"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rakazo-desktop-mac-unsigned
+          path: ${{ runner.temp }}/Rakazo-mac-unsigned.zip
+          retention-days: 14
