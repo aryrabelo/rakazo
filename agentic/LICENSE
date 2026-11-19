@@ -1,0 +1,15 @@
+Copyright (c) 2026 Ary Rabelo. All rights reserved.
+
+This license covers only the files under the agentic/ directory of this repository (the
+"agentic overlay"). Everything else in this repository is Rakazo, licensed under the Apache
+License 2.0 (see ../LICENSE and ../NOTICE); building with the overlay does not change those terms
+for Rakazo's own code.
+
+No permission is granted to use, copy, modify, merge, publish, distribute, sublicense or sell
+the agentic overlay, in source or compiled form, except by the copyright holder or with the
+copyright holder's prior written permission.
+
+THE AGENTIC OVERLAY IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE
+AND NONINFRINGEMENT. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR
+OTHER LIABILITY ARISING FROM, OUT OF OR IN CONNECTION WITH THE AGENTIC OVERLAY.
