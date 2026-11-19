@@ -47,6 +47,17 @@ internet connection instead of the server's. For sites that block datacenter add
 - Server: the supervisor gives each Docker computer a proxy on that computer's own network and
   points its browser at it, falling back to a direct connection when the owner's desktop is not
   connected or the switch is off.
+  - Turn it on with `SANDBOX_ROUTE_TRAFFIC_API_URL` on the supervisor: the API's internal base URL
+    (Compose: `http://api:<API port>`). It needs `SANDBOX_SCREEN_NETWORK=isolated`, the Compose
+    default, so each computer has its own network. Unset, nothing changes.
+  - A computer routes only while every bot on it belongs to the computer's owner and nobody else
+    (person or another person's bot) holds its control; otherwise it never does.
+  - The supervisor asks the API at `/internal/computers/tunnel` with a key derived from
+    `SANDBOX_SUPERVISOR_TOKEN`; API processes forward tunnels to the one holding the desktop's
+    socket at `/internal/user-devices/tunnel` with the device forward secret. Both are HTTP
+    upgrades outside `/api`, so the public proxy never routes them.
+  - An operator's `data:` PAC still decides first; only what it sends `DIRECT` may be routed. An
+    `http(s)` PAC URL is kept as configured and those computers do not route.
 
 Builds: `.github/workflows/agentic-app-image.yml` (server image) and
 `.github/workflows/agentic-desktop.yml` (macOS desktop app, unsigned).
